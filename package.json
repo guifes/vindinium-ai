@@ -1,0 +1,23 @@
+{
+  "name": "vindinium-ai",
+  "version": "1.0.0",
+  "description": "My vindinium AI",
+  "main": "main.lua",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/guifes/vindinium-ai.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/guifes/vindinium-ai/issues"
+  },
+  "homepage": "https://github.com/guifes/vindinium-ai#readme",
+  "devDependencies": {
+    "gulp": "^4.0.2",
+    "gulp-concat": "^2.6.1"
+  }
+}
