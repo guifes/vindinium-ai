@@ -7,7 +7,7 @@ function getNearest(heroPos, destinations)
 
         local destination = destinations[i]
 
-        local diff = Vector2:new(destination.x - heroPos.x, destination.y - heroPos.y)
+        local diff = Vector2.subtract(destination, heroPos)
         local distance = math.abs(diff.x) + math.abs(diff.y)
 
         if minDistance > distance then
