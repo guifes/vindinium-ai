@@ -3,7 +3,7 @@ const concat = require('gulp-concat');
  
 gulp.task('default', function() {
   return gulp.src([
-      './src/nearest.lua',
+      './src/array.lua',
       './src/vector2.lua',
       './src/set.lua',
       './src/map.lua',
@@ -12,6 +12,6 @@ gulp.task('default', function() {
       './src/misc.lua',
       './src/main.lua'
     ])
-    .pipe(concat('main.lua', {newLine: '\n\n'}))
+    .pipe(concat('build.lua', {newLine: '\n\n'}))
     .pipe(gulp.dest('./build/'));
 });

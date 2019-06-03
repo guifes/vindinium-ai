@@ -1,4 +1,4 @@
-function findBestPath(map, from, to, collision)
+function findBestPath(map, from, to)
 
     Node = {}
 
@@ -69,12 +69,12 @@ function findBestPath(map, from, to, collision)
 		end
 
 		if node.state:equals(to) then
-			return buildSolution(node)
+			return buildSolution(node), true
 		end
 
 		closedSet:add(node.state)
 
-		for _, transition in ipairs(map.expand(node.state)) do
+		for _, transition in ipairs(map.expand(from, to, node.state)) do
 
 			local child = map.applyTransition(node.state, transition)
 			local isNodeInFrontier = openMap:has(child)
@@ -99,7 +99,5 @@ function findBestPath(map, from, to, collision)
 		end
 	end
 	
-	if collision then
-		return buildSolution(best)
-	end
+	return buildSolution(best), false
 end

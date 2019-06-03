@@ -23,22 +23,48 @@ function map.applyTransition(state, transition)
 	return Vector2.add(state, transition)
 end
 
-function map.expand(state)
+function map.expand(startState, endState, state)
 	local transitions = {}
 
     -- printDebug("expanding: ")
-    -- printDebugLn(state)
+    -- printDebug(state)
+    -- printDebug(" , startState: ")
+    -- printDebug(startState)
+    -- printDebug(" , endState: ")
+    -- printDebugLn(endState)
 
 	for _, transition in ipairs(Vector2.directions) do
         local newState = map.applyTransition(state, transition)
-        -- printDebug("new state: ")
+
+        local validPos = (
+            newState.x >= 0 and
+            newState.x < map.size and
+            newState.y >= 0 and
+            newState.y < map.size
+        )
+
+        local isObstacle = map.obstacles:has(newState)
+        
+        local isDynamicObstacle = (
+            startState:equals(state) and
+            map.dynamicObstacles:has(newState)
+        )
+
+        local isDestination = endState:equals(newState)
+        
+        -- printDebug("newState: ")
         -- printDebug(newState)
-        if newState.x >= 0 and
-           newState.x < map.size and
-           newState.y >= 0 and
-           newState.y < map.size and
-           not map.obstacles:has(newState)
-        then
+        -- printDebug(" (")
+        -- printDebug(validPos)
+        -- printDebug(", ")
+        -- printDebug(isObstacle)
+        -- printDebug(", ")
+        -- printDebug(isDynamicObstacle)
+        -- printDebug(", ")
+        -- printDebug(isDestination)
+        -- printDebug(") - ")
+        -- printDebugLn(validPos and ((not isObstacle and not isDynamicObstacle) or isDestination))
+        if validPos and ((not isObstacle and not isDynamicObstacle) or isDestination) then
             table.insert(transitions, transition)
             -- printDebugLn(" is valid")
         else
@@ -64,16 +90,23 @@ function map:buildObstacles(taverns, mines, walls, heroes)
     for _, wall in ipairs(walls) do
         set:add(wall)
     end
-    
+
     for _, hero in ipairs(heroes) do
         set:add(hero.pos)
     end
 
-    -- for key, val in pairs(set) do
-    --     printDebugLn(val)
-    -- end
-
     self.obstacles = set
+end
+
+function map:addDynamicObstacles(obstacles)
+    for _, obstacle in pairs(obstacles) do
+        self.dynamicObstacles:add(obstacle)
+    end
+end
+
+function map:clearObstacles()
+    self.obstacles = Set:new()
+    self.dynamicObstacles = Set:new()
 end
 
 -- Global entities
@@ -144,17 +177,18 @@ while true do
             hero.gold = gold
             hero.pos = Vector2:new(x, y)
             hero.mines = {}
-            hero.unclaimedMines = {}
 
             if id == myID then
 
-                myHero = hero
+                hero.unclaimedMines = {}
 
+                myHero = hero
+                
                 canHeal = myHero.gold >= 2
                 canDie = myHero.life <= 20
             end
 
-            table.insert(heroes, hero)
+            heroes[id] = hero
         end
 
         if entityType == "MINE" then
@@ -164,41 +198,70 @@ while true do
             if id == myID then
                 table.insert(myHero.mines, mine)
             else
+                if id >= 0 then
+                    table.insert(heroes[id].mines, mine)
+                end
+
                 table.insert(myHero.unclaimedMines, mine)
             end
         end
     end
-    
-    map:buildObstacles(taverns, mines, walls, heroes)
 
-    healing = ternary(myHero.life > 75, false, healing)
+    local enemies = Array.filter(heroes, function(item) return item ~= myHero end)
     
-    local nearestTavernInfo = getNearest(myHero.pos, taverns)
+    map:clearObstacles()
+
+    map:buildObstacles(taverns, mines, walls, enemies)
+
+    -- Is player in the process of healing
+    healing = ternary(myHero.life > 75, false, healing)
+
+    printDebugLn("Finding nearest taverns: ")
+    local nearestTavernInfo = getNearest(map, myHero.pos, taverns)
     local nearestTavern = taverns[nearestTavernInfo.i]
 
+    -- local bestEnemyInRangeWorthKilling = findBestEnemyInRangeWorthKilling(myHero, heroes)
+
+    -- if bestEnemyInRangeWorthKilling then
+
+    --     io.stderr:write("Seeking hero @ " .. bestEnemyInRangeWorthKilling.pos.x .. ", " .. bestEnemyInRangeWorthKilling.pos.y .. "\n")
+    --     local path = findBestPath(map, myHero.pos, bestEnemyInRangeWorthKilling.pos)
+
+    --     print(findDirectionForNearestPath(path, myHero.pos, bestEnemyInRangeWorthKilling.pos))
+
+    local enemiesInRange = Array.filter(enemies, function(item) return isPositionInRange(map, myHero.pos, item.pos) end)
+    local enemiesInRangePositions = Array.map(enemiesInRange, function(item) return item.pos end)
+
+    if #myHero.mines > 0 and canDie and #enemiesInRange > 0 then
+        printDebugLn("there are enemies in rage " .. tostring(enemiesInRange[1].pos))
+
+        for i, pos in ipairs(enemiesInRangePositions) do
+            local dangerZone = getDangerZoneForPos(pos)
+            map:addDynamicObstacles(dangerZone)
+        end
+    end
+    
     if (healing or canDie or (nearestTavernInfo.d <= 2 and myHero.life <= 50)) and canHeal then
 
         healing = true
 
-        io.stderr:write("Seeking tavern @ " .. nearestTavern.x .. ", " .. nearestTavern.y .. "\n")
-        local path = findBestPath(map, myHero.pos, nearestTavern, true)
+        printDebugLn("Seeking tavern @ " .. nearestTavern.x .. ", " .. nearestTavern.y)
+        local path = findBestPath(map, myHero.pos, nearestTavern)
 
         print(findDirectionForNearestPath(path, myHero.pos, nearestTavern))
         
     elseif #myHero.unclaimedMines > 0 then
 
-        local info = getNearest(myHero.pos, myHero.unclaimedMines)
+        printDebugLn("Finding nearest mines: ")
+        local info = getNearest(map, myHero.pos, myHero.unclaimedMines)
         local mine = myHero.unclaimedMines[info.i]
         
-        io.stderr:write("Seeking mine @ " .. mine.x .. ", " .. mine.y .. "\n")
-        local path = findBestPath(map, myHero.pos, mine, true)
+        printDebugLn("Seeking mine @ " .. mine.x .. ", " .. mine.y)
+        local path = findBestPath(map, myHero.pos, mine)
 
         print(findDirectionForNearestPath(path, myHero.pos, mine))
         
     else
         print("WAIT") -- WAIT | NORTH | EAST | SOUTH | WEST
     end
-
-    -- Write an action using print()
-    -- To debug: io.stderr:write("Debug message\n")
 end
