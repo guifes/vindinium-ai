@@ -53,27 +53,14 @@ function findDirectionForNearestPath(path, from, to)
 end
 
 function isPositionInRange(map, from, to)
-    local path = findBestPath(map, from, to)
-    return #path <= 3
+    local diff = Vector2.subtract(to, from)
+    local distance = diff:magnitude()
+    if distance <= 3 then
+        local path = findBestPath(map, from, to)
+        return #path <= 3
+    end
+    return false
 end
-
--- function findBestEnemyInRangeWorthKilling(myHero, heroes)
---     local mostMines = -1
---     local bestEnemy = nil
---     for _, hero in ipairs(heroes) do
---         if hero.id ~= myHero.id then
---             local diff = Vector2.subtract(hero.pos, myHero.pos)
---             local distance = math.abs(diff.x) + math.abs(diff.y)
---             if distance <= 2 and #hero.mines > 0 and myHero.life > (hero.life - 20) then
---                 if mostMines < #hero.mines then
---                     mostMines = #hero.mines
---                     bestEnemy = hero
---                 end
---             end
---         end
---     end
---     return bestEnemy
--- end
 
 function getNearest(map, heroPos, destinations)
 
@@ -85,7 +72,7 @@ function getNearest(map, heroPos, destinations)
         local destination = destinations[i]
 
         local diff = Vector2.subtract(destination, heroPos)
-        local directDistance = math.abs(diff.x) + math.abs(diff.y)
+        local directDistance = diff:magnitude()
 
         if minDistance > directDistance then
             local path, reachable = findBestPath(map, heroPos, destination)

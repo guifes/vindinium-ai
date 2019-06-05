@@ -29,6 +29,10 @@ function Vector2:equals(vec)
 	return self.x == vec.x and self.y == vec.y
 end
 
+function Vector2:magnitude()
+	return math.abs(self.x) + math.abs(self.y)
+end
+
 table.insert(Vector2.directions, Vector2:new(1, 0))
 table.insert(Vector2.directions, Vector2:new(0, 1))
 table.insert(Vector2.directions, Vector2:new(-1, 0))

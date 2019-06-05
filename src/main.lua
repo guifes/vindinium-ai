@@ -5,7 +5,11 @@
 
 --[[
 TODO:
-Always check if a player about to die is in reach and has mines (ATTACK)
+- Calculate how many steps to get to next mine and deduce from current health to see if it's
+possible to dominate the tavern without having to heal first
+- Check for players near buy that can kill us and steal our mines and run away from them
+- Always check if a player about to die is in reach and has mines (ATTACK)
+
 --]]
 
 local map = {}
@@ -15,8 +19,8 @@ function map.pathCost(state, transition)
 end
 
 function map.heuristic(from, to)
-	local dif = Vector2.subtract(from, to)
-	return math.abs(dif.x) + math.abs(dif.y);
+	local diff = Vector2.subtract(from, to)
+	return diff:magnitude()
 end
 
 function map.applyTransition(state, transition)
@@ -220,20 +224,11 @@ while true do
     local nearestTavernInfo = getNearest(map, myHero.pos, taverns)
     local nearestTavern = taverns[nearestTavernInfo.i]
 
-    -- local bestEnemyInRangeWorthKilling = findBestEnemyInRangeWorthKilling(myHero, heroes)
-
-    -- if bestEnemyInRangeWorthKilling then
-
-    --     io.stderr:write("Seeking hero @ " .. bestEnemyInRangeWorthKilling.pos.x .. ", " .. bestEnemyInRangeWorthKilling.pos.y .. "\n")
-    --     local path = findBestPath(map, myHero.pos, bestEnemyInRangeWorthKilling.pos)
-
-    --     print(findDirectionForNearestPath(path, myHero.pos, bestEnemyInRangeWorthKilling.pos))
-
     local enemiesInRange = Array.filter(enemies, function(item) return isPositionInRange(map, myHero.pos, item.pos) end)
     local enemiesInRangePositions = Array.map(enemiesInRange, function(item) return item.pos end)
 
     if #myHero.mines > 0 and canDie and #enemiesInRange > 0 then
-        printDebugLn("there are enemies in rage " .. tostring(enemiesInRange[1].pos))
+        printDebugLn("there are enemies in range " .. tostring(enemiesInRange[1].pos))
 
         for i, pos in ipairs(enemiesInRangePositions) do
             local dangerZone = getDangerZoneForPos(pos)
