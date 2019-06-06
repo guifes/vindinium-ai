@@ -224,6 +224,9 @@ while true do
     local nearestTavernInfo = getNearest(map, myHero.pos, taverns)
     local nearestTavern = taverns[nearestTavernInfo.i]
 
+    local diff = Vector2.subtract(nearestTavern, myHero.pos)
+    local nearestTavernDistance = diff:magnitude()
+
     local enemiesInRange = Array.filter(enemies, function(item) return isPositionInRange(map, myHero.pos, item.pos) end)
     local enemiesInRangePositions = Array.map(enemiesInRange, function(item) return item.pos end)
 
@@ -236,7 +239,13 @@ while true do
         end
     end
     
-    if (healing or canDie or (nearestTavernInfo.d <= 2 and myHero.life <= 50)) and canHeal then
+    if
+        (
+            healing or canDie or
+            (nearestTavernInfo.d <= 2 and myHero.life <= 50) or
+            (myHero.life - nearestTavernDistance) <= 20
+        ) and canHeal
+    then
 
         healing = true
 
