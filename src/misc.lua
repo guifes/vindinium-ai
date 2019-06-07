@@ -82,13 +82,17 @@ function getNearest(map, heroPos, destinations)
             -- printPath(path)
             -- printDebugLn(reachable)
 
-            if reachable then
-                local distance = #path
+            local distance
 
-                if minDistance > distance then
-                    minDistance = distance
-                    nearest = { i = i, d = distance }
-                end
+            if reachable then
+                distance = #path
+            else
+                distance = directDistance
+            end
+
+            if minDistance > distance then
+                minDistance = distance
+                nearest = { i = i, d = distance }
             end
         end
     end

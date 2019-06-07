@@ -220,12 +220,17 @@ while true do
     -- Is player in the process of healing
     healing = ternary(myHero.life > 75, false, healing)
 
-    printDebugLn("Finding nearest taverns: ")
     local nearestTavernInfo = getNearest(map, myHero.pos, taverns)
     local nearestTavern = taverns[nearestTavernInfo.i]
 
+    local nearestMineInfo = getNearest(map, myHero.pos, myHero.unclaimedMines)
+    local nearestMine = myHero.unclaimedMines[nearestMineInfo.i]
+
     local diff = Vector2.subtract(nearestTavern, myHero.pos)
     local nearestTavernDistance = diff:magnitude()
+
+    diff = Vector2.subtract(nearestMine, myHero.pos)
+    local nearestMineDistance = diff:magnitude()
 
     local enemiesInRange = Array.filter(enemies, function(item) return isPositionInRange(map, myHero.pos, item.pos) end)
     local enemiesInRangePositions = Array.map(enemiesInRange, function(item) return item.pos end)
@@ -243,10 +248,21 @@ while true do
         (
             healing or canDie or
             (nearestTavernInfo.d <= 2 and myHero.life <= 50) or
-            (myHero.life - nearestTavernDistance) <= 20
+            (myHero.life - nearestMineDistance) <= 20
         ) and canHeal
     then
 
+        printDebug("healing: ")
+        printDebugLn(healing)
+        printDebug("canHeal: ")
+        printDebugLn(canHeal)
+        printDebug("canDie: ")
+        printDebugLn(canDie)
+        printDebug("nearestTavern distance: ")
+        printDebugLn(nearestTavernInfo.d)
+        printDebug("myHero.life: ")
+        printDebugLn(myHero.life)
+        
         healing = true
 
         printDebugLn("Seeking tavern @ " .. nearestTavern.x .. ", " .. nearestTavern.y)
@@ -256,14 +272,10 @@ while true do
         
     elseif #myHero.unclaimedMines > 0 then
 
-        printDebugLn("Finding nearest mines: ")
-        local info = getNearest(map, myHero.pos, myHero.unclaimedMines)
-        local mine = myHero.unclaimedMines[info.i]
-        
-        printDebugLn("Seeking mine @ " .. mine.x .. ", " .. mine.y)
-        local path = findBestPath(map, myHero.pos, mine)
+        printDebugLn("Seeking mine @ " .. nearestMine.x .. ", " .. nearestMine.y)
+        local path = findBestPath(map, myHero.pos, nearestMine)
 
-        print(findDirectionForNearestPath(path, myHero.pos, mine))
+        print(findDirectionForNearestPath(path, myHero.pos, nearestMine))
         
     else
         print("WAIT") -- WAIT | NORTH | EAST | SOUTH | WEST
