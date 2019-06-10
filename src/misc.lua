@@ -1,3 +1,15 @@
+local moveCommands = {
+    "WAIT", "EAST", "SOUTH", "WEST", "NORTH"
+}
+
+local commandDirections = {
+	WAIT = Vector2.zero,
+	EAST = Vector2.directions[1],
+	SOUTH = Vector2.directions[2],
+	WEST = Vector2.directions[3],
+	NORTH = Vector2.directions[4]
+}
+
 local dangerZoneOffsets = {}
 
 table.insert(dangerZoneOffsets, Vector2:new(1, 0))
@@ -32,6 +44,18 @@ function printPath(path)
     printDebugLn("")
 end
 
+function commandForDirection(dir)
+    if dir.x > 0 then
+        return "EAST"
+    elseif dir.x < 0 then
+        return "WEST"
+    elseif dir.y > 0 then
+        return "SOUTH"
+    elseif dir.y < 0 then
+        return "NORTH"
+    end
+end
+
 function findDirectionForNearestPath(path, from, to)
     -- printPath(path)
     local transition
@@ -41,15 +65,7 @@ function findDirectionForNearestPath(path, from, to)
         transition = Vector2.subtract(to, from)
     end
 
-    if transition.x > 0 then
-        return "EAST"
-    elseif transition.x < 0 then
-        return "WEST"
-    elseif transition.y > 0 then
-        return "SOUTH"
-    elseif transition.y < 0 then
-        return "NORTH"
-    end
+    return commandForDirection(transition)
 end
 
 function isPositionInRange(map, from, to)
@@ -107,4 +123,40 @@ function getDangerZoneForPos(pos)
         table.insert(zone, zonePos)
     end
     return zone
+end
+
+function positionHasKillableEnemy(pos, myHero, enemies)
+    for i, enemy in ipairs(enemies) do
+        if pos:equals(enemy.pos) and myHero.life >= enemy.life then
+            return true
+        end
+    end
+    return false
+end
+
+function findEnemiesInKillingRange(map, hero, enemies)
+    local bestScore = 0
+    local finalCommand = nil
+    for i, command in ipairs(moveCommands) do
+        local dir = commandDirections[command]
+        local newPos = Vector2.add(hero.pos, dir)
+        local score = 0
+        for j, newDir in ipairs(Vector2.directions) do
+            local posToCheck = Vector2.add(newPos, newDir)
+            if
+                not dir:equals(Vector2.scale(newDir, -1)) and
+                not map.obstacles:has(posToCheck)
+            then
+                if positionHasKillableEnemy(posToCheck, hero, enemies) then
+                    score = score + 1
+                end
+            end
+        end
+        if score > bestScore then
+            bestScore = score
+            finalCommand = command
+        end
+    end
+
+    return finalCommand
 end

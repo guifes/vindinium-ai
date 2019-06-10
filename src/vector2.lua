@@ -1,6 +1,7 @@
 Vector2 = {
 	mt = {},
-	directions = {}
+	directions = {},
+	commandVectors = {}
 }
 
 Vector2.mt.__index = Vector2
@@ -29,9 +30,15 @@ function Vector2:equals(vec)
 	return self.x == vec.x and self.y == vec.y
 end
 
+function Vector2.scale(vec, a)
+	return Vector2:new(vec.x * a, vec.y * a)
+end
+
 function Vector2:magnitude()
 	return math.abs(self.x) + math.abs(self.y)
 end
+
+Vector2.zero = Vector2:new(0, 0)
 
 table.insert(Vector2.directions, Vector2:new(1, 0))
 table.insert(Vector2.directions, Vector2:new(0, 1))

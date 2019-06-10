@@ -79,7 +79,7 @@ function map.expand(startState, endState, state)
 	return transitions
 end
 
-function map:buildObstacles(taverns, mines, walls, heroes)
+function map:buildObstacles(taverns, mines, walls, enemies)
 
     local set = Set:new()
 
@@ -93,10 +93,6 @@ function map:buildObstacles(taverns, mines, walls, heroes)
     
     for _, wall in ipairs(walls) do
         set:add(wall)
-    end
-
-    for _, hero in ipairs(heroes) do
-        set:add(hero.pos)
     end
 
     self.obstacles = set
@@ -215,7 +211,7 @@ while true do
     
     map:clearObstacles()
 
-    map:buildObstacles(taverns, mines, walls, enemies)
+    map:buildObstacles(taverns, mines, walls)
 
     -- Is player in the process of healing
     healing = ternary(myHero.life > 75, false, healing)
@@ -232,8 +228,12 @@ while true do
     diff = Vector2.subtract(nearestMine, myHero.pos)
     local nearestMineDistance = diff:magnitude()
 
+    -- Checking if there are enemies nearby that can kill us
+
     local enemiesInRange = Array.filter(enemies, function(item) return isPositionInRange(map, myHero.pos, item.pos) end)
     local enemiesInRangePositions = Array.map(enemiesInRange, function(item) return item.pos end)
+
+    map:addDynamicObstacles(Array.map(enemies, function(item) return item.pos end))
 
     if #myHero.mines > 0 and canDie and #enemiesInRange > 0 then
         printDebugLn("there are enemies in range " .. tostring(enemiesInRange[1].pos))
@@ -243,8 +243,22 @@ while true do
             map:addDynamicObstacles(dangerZone)
         end
     end
-    
-    if
+
+    -------------------------------------------
+    -- Checkinf if should try and kill enemy --
+    -------------------------------------------
+
+    local command = findEnemiesInKillingRange(map, myHero, enemies)
+
+    if command then
+        printDebug("Moving to kill: ")
+        printDebugLn(command)
+        print(command)
+
+    -----------------------------
+    -- Checking if should heal --
+    -----------------------------
+    elseif
         (
             healing or canDie or
             (nearestTavernInfo.d <= 2 and myHero.life <= 50) or
@@ -269,7 +283,10 @@ while true do
         local path = findBestPath(map, myHero.pos, nearestTavern)
 
         print(findDirectionForNearestPath(path, myHero.pos, nearestTavern))
-        
+    
+    -----------------------------------------------------
+    -- Checking if should try and conquer nearest mine --
+    -----------------------------------------------------
     elseif #myHero.unclaimedMines > 0 then
 
         printDebugLn("Seeking mine @ " .. nearestMine.x .. ", " .. nearestMine.y)
