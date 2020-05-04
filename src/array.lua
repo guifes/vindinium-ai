@@ -1,4 +1,4 @@
-local Array = {}
+Array = {}
 
 function Array.filter(arr, condition)
     local filtered = {}

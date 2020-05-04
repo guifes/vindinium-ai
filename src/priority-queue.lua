@@ -52,7 +52,7 @@ function PriorityQueue:dequeue()
 end
 
 function PriorityQueue:isEmpty()
-	return self.head and true
+	return not (self.head and true)
 end
 
 function PriorityQueue:remove(val)

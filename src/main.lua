@@ -127,7 +127,7 @@ map.size = size
 
 for i = 0, size - 1 do
 
-    line = io.read()
+    local line = io.read()
 
     local charCount = 0
     line:gsub(".", function(c)
@@ -161,12 +161,12 @@ while true do
     for i = 0, entityCount - 1 do
         next_token = string.gmatch(io.read(), "[^%s]+")
 
-        entityType = next_token() -- entityType: HERO or MINE
-        id = tonumber(next_token()) -- id: the ID of a hero or the owner of a mine
-        x = tonumber(next_token()) -- x: the x position of the entity
-        y = tonumber(next_token()) -- y: the y position of the entity
-        life = tonumber(next_token()) -- life: the life of a hero (-1 for mines)
-        gold = tonumber(next_token()) -- gold: the gold of a hero (-1 for mines)
+        local entityType = next_token() -- entityType: HERO or MINE
+        local id = tonumber(next_token()) -- id: the ID of a hero or the owner of a mine
+        local x = tonumber(next_token()) -- x: the x position of the entity
+        local y = tonumber(next_token()) -- y: the y position of the entity
+        local life = tonumber(next_token()) -- life: the life of a hero (-1 for mines)
+        local gold = tonumber(next_token()) -- gold: the gold of a hero (-1 for mines)
 
         if entityType == "HERO" then
             
@@ -225,8 +225,14 @@ while true do
     local diff = Vector2.subtract(nearestTavern, myHero.pos)
     local nearestTavernDistance = diff:magnitude()
 
-    diff = Vector2.subtract(nearestMine, myHero.pos)
-    local nearestMineDistance = diff:magnitude()
+    local nearestMineDistance
+
+    if nearestMine then
+        diff = Vector2.subtract(nearestMine, myHero.pos)
+        nearestMineDistance = diff:magnitude()
+    else
+        nearestMineDistance = -1
+    end
 
     -- Checking if there are enemies nearby that can kill us
 
@@ -262,7 +268,7 @@ while true do
         (
             healing or canDie or
             (nearestTavernInfo.d <= 2 and myHero.life <= 50) or
-            (myHero.life - nearestMineDistance) <= 20
+            (nearestMineDistance >= 0 and (myHero.life - nearestMineDistance) <= 20)
         ) and canHeal
     then
 
@@ -287,7 +293,7 @@ while true do
     -----------------------------------------------------
     -- Checking if should try and conquer nearest mine --
     -----------------------------------------------------
-    elseif #myHero.unclaimedMines > 0 then
+    elseif nearestMine and #myHero.unclaimedMines > 0 then
 
         printDebugLn("Seeking mine @ " .. nearestMine.x .. ", " .. nearestMine.y)
         local path = findBestPath(map, myHero.pos, nearestMine)

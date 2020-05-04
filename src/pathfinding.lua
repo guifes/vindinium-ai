@@ -58,7 +58,7 @@ function findBestPath(map, from, to)
     openList:enqueue(start)
 	openMap:set(from, start)
 
-	while openList:isEmpty() do
+	while not openList:isEmpty() do
 
 		local node = openList:dequeue()
 
@@ -79,7 +79,7 @@ function findBestPath(map, from, to)
 			local child = map.applyTransition(node.state, transition)
 			local isNodeInFrontier = openMap:has(child)
 
-			if not closedSet:has(child)and not isNodeInFrontier then
+			if not closedSet:has(child) and not isNodeInFrontier then
 				local searchNode = createSearchNode(node, transition, child, to)
 
 				openList:enqueue(searchNode)

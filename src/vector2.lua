@@ -34,6 +34,15 @@ function Vector2.scale(vec, a)
 	return Vector2:new(vec.x * a, vec.y * a)
 end
 
+function Vector2.adjacent(a, b)
+	for i, v in ipairs(Vector2.directions) do
+		if a:equals(Vector2.add(a, v)) then
+			return true
+		end
+	end
+	return false
+end
+
 function Vector2:magnitude()
 	return math.abs(self.x) + math.abs(self.y)
 end

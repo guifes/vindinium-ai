@@ -2,7 +2,7 @@ local moveCommands = {
     "WAIT", "EAST", "SOUTH", "WEST", "NORTH"
 }
 
-local commandDirections = {
+commandDirections = {
 	WAIT = Vector2.zero,
 	EAST = Vector2.directions[1],
 	SOUTH = Vector2.directions[2],
